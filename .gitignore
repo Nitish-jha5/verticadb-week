@@ -1,0 +1,16 @@
+# Secrets and credentials
+.env
+*.pem
+*.key
+credentials*
+secrets*
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Temporary Vertica/output files
+*.log
+*.tmp

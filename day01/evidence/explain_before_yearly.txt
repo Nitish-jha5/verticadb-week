@@ -1,0 +1,47 @@
+Timing is on.
+Pager usage is off.
+------------------------------ 
+QUERY PLAN DESCRIPTION: 
+------------------------------
+
+EXPLAIN
+SELECT
+    YEAR(store_sales_date) AS sales_year,
+    SUM(sales_dollar_amount) AS total_sales,
+    SUM(gross_profit_dollar_amount) AS total_profit
+FROM store.store_sales_fact
+GROUP BY YEAR(store_sales_date)
+ORDER BY sales_year;
+
+Access Path:
++-GROUPBY HASH (SORT OUTPUT) (LOCAL RESEGMENT GROUPS) [Cost: 16K, Rows: 10K (NO STATISTICS)] (PATH ID: 2)
+|  Aggregates: sum(store_sales_fact.sales_dollar_amount), sum(store_sales_fact.gross_profit_dollar_amount)
+|  Group By: (date_part('year', (store_sales_fact.store_sales_date)::timestamp))::int
+| +---> STORAGE ACCESS for store_sales_fact [Cost: 13K, Rows: 5M (NO STATISTICS)] (PATH ID: 3)
+| |      Projection: store.store_sales_fact_super
+| |      Materialize: store_sales_fact.sales_dollar_amount, store_sales_fact.gross_profit_dollar_amount, store_sales_fact.store_sales_date
+
+
+------------------------------
+----------------------------------------------- 
+PLAN: BASE QUERY PLAN (GraphViz Format)
+----------------------------------------------- 
+digraph G {
+graph [rankdir=BT, label = "BASE QUERY PLAN\nQuery: EXPLAIN\nSELECT\n    YEAR(store_sales_date) AS sales_year,\n    SUM(sales_dollar_amount) AS total_sales,\n    SUM(gross_profit_dollar_amount) AS total_profit\nFROM store.store_sales_fact\nGROUP BY YEAR(store_sales_date)\nORDER BY sales_year;\n\nAll Nodes Vector: \n\n  node[0]=v_demo_node0001 (initiator) Up\n", labelloc=t, labeljust=l ordering=out]
+0[label = "Root \nOutBlk=[UncTuple(3)]", color = "green", shape = "house"];
+1[label = "NewEENode \nOutBlk=[UncTuple(3)]", color = "green", shape = "box"];
+2[label = "ParallelMergeStep: 1 sorted\nCombine\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "green", shape = "box"];
+3[label = "GroupByHash(Sort Groups)(Spill): 1 keys\nAggs:\n  sum(store_sales_fact.sales_dollar_amount)\n  sum(store_sales_fact.gross_profit_dollar_amount)\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "green", shape = "box"];
+4[label = "StorageUnionStep: store_sales_fact_super\nLocally Resegment\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "purple", shape = "box"];
+5[label = "GroupByPipe(HashPrepass): 1 keys\nAggs:\n  sum(store_sales_fact.sales_dollar_amount)\n  sum(store_sales_fact.gross_profit_dollar_amount)\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "brown", shape = "box"];
+6[label = "ExprEval: \n  (date_part(\'year\', (store_sales_fact.store_sales_date)::timestamp))::int\n  store_sales_fact.sales_dollar_amount\n  store_sales_fact.gross_profit_dollar_amount\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "brown", shape = "box"];
+7[label = "ScanStep: store_sales_fact_super\nemployee_key (not emitted)\nsales_dollar_amount\ngross_profit_dollar_amount\nstore_sales_date\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Date(8)", color = "brown", shape = "box"];
+1->0 [label = "V[0] C=3",color = "black",style="bold", arrowtail="inv"];
+2->1 [label = "0",color = "blue"];
+3->2 [label = "0",color = "blue"];
+4->3 [label = "0",color = "blue"];
+5->4 [label = "0",color = "blue"];
+6->5 [label = "0",color = "blue"];
+7->6 [label = "0",color = "blue"];
+}
+Time: First fetch (44 rows): 2.931 ms. All rows formatted: 2.953 ms

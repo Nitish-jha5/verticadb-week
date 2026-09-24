@@ -1,0 +1,29 @@
+               projection_name                | partition_key | rows_in_partition 
+----------------------------------------------+---------------+-------------------
+ store_sales_fact_DBD_1_rep_day1_store_design | 2003          |            193632
+ store_sales_fact_DBD_1_rep_day1_store_design | 2004          |            203354
+ store_sales_fact_DBD_1_rep_day1_store_design | 2005          |            197529
+ store_sales_fact_DBD_1_rep_day1_store_design | 2006          |            205498
+ store_sales_fact_DBD_1_rep_day1_store_design | 2007          |            202180
+ store_sales_fact_DBD_1_rep_day1_store_design | 2008          |            207718
+ store_sales_fact_DBD_1_rep_day1_store_design | 2009          |            191697
+ store_sales_fact_DBD_1_rep_day1_store_design | 2010          |            202399
+ store_sales_fact_DBD_1_rep_day1_store_design | 2011          |            195699
+ store_sales_fact_DBD_1_rep_day1_store_design | 2012          |            193531
+ store_sales_fact_DBD_1_rep_day1_store_design | 2013          |            190777
+ store_sales_fact_DBD_1_rep_day1_store_design | 2014          |            207067
+ store_sales_fact_DBD_1_rep_day1_store_design | 2015          |            199637
+ store_sales_fact_DBD_1_rep_day1_store_design | 2016          |            203269
+ store_sales_fact_DBD_1_rep_day1_store_design | 2017          |            201559
+ store_sales_fact_DBD_1_rep_day1_store_design | 2018          |            196943
+ store_sales_fact_DBD_1_rep_day1_store_design | 2019          |            206000
+ store_sales_fact_DBD_1_rep_day1_store_design | 2020          |            203940
+ store_sales_fact_DBD_1_rep_day1_store_design | 2021          |            205661
+ store_sales_fact_DBD_1_rep_day1_store_design | 2022          |            206686
+ store_sales_fact_DBD_1_rep_day1_store_design | 2023          |            197471
+ store_sales_fact_DBD_1_rep_day1_store_design | 2024          |            196476
+ store_sales_fact_DBD_1_rep_day1_store_design | 2025          |            194576
+ store_sales_fact_DBD_1_rep_day1_store_design | 2026          |            199306
+ store_sales_fact_DBD_1_rep_day1_store_design | 2027          |            197395
+(25 rows)
+

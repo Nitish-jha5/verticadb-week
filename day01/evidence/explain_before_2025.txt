@@ -1,0 +1,49 @@
+                                                                                                                                                                                                                               QUERY PLAN                                                                                                                                                                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ ------------------------------ 
+ QUERY PLAN DESCRIPTION: 
+ ------------------------------
+ 
+ EXPLAIN
+ SELECT
+     store_key,
+     SUM(sales_dollar_amount) AS total_sales,
+     SUM(gross_profit_dollar_amount) AS total_profit
+ FROM store.store_sales_fact
+ WHERE store_sales_date >= DATE '2025-01-01'
+   AND store_sales_date < DATE '2026-01-01'
+ GROUP BY store_key
+ ORDER BY store_key;
+ 
+ Access Path:
+ +-GROUPBY HASH (SORT OUTPUT) (LOCAL RESEGMENT GROUPS) [Cost: 21K, Rows: 10K (NO STATISTICS)] (PATH ID: 2)
+ |  Aggregates: sum(store_sales_fact.sales_dollar_amount), sum(store_sales_fact.gross_profit_dollar_amount)
+ |  Group By: store_sales_fact.store_key
+ | +---> STORAGE ACCESS for store_sales_fact [Cost: 18K, Rows: 5M (NO STATISTICS)] (PATH ID: 3)
+ | |      Projection: store.store_sales_fact_super
+ | |      Materialize: store_sales_fact.store_key, store_sales_fact.sales_dollar_amount, store_sales_fact.gross_profit_dollar_amount
+ | |      Filter: ((store_sales_fact.store_sales_date >= '2025-01-01'::date) AND (store_sales_fact.store_sales_date < '2026-01-01'::date))
+ 
+ 
+ ------------------------------
+ ----------------------------------------------- 
+ PLAN: BASE QUERY PLAN (GraphViz Format)
+ ----------------------------------------------- 
+ digraph G {
+ graph [rankdir=BT, label = "BASE QUERY PLAN\nQuery: EXPLAIN\nSELECT\n    store_key,\n    SUM(sales_dollar_amount) AS total_sales,\n    SUM(gross_profit_dollar_amount) AS total_profit\nFROM store.store_sales_fact\nWHERE store_sales_date \>= DATE \'2025-01-01\'\n  AND store_sales_date \< DATE \'2026-01-01\'\nGROUP BY store_key\nORDER BY store_key;\n\nAll Nodes Vector: \n\n  node[0]=v_demo_node0001 (initiator) Up\n", labelloc=t, labeljust=l ordering=out]
+ 0[label = "Root \nOutBlk=[UncTuple(3)]", color = "green", shape = "house"];
+ 1[label = "NewEENode \nOutBlk=[UncTuple(3)]", color = "green", shape = "box"];
+ 2[label = "ParallelMergeStep: 1 sorted\nCombine\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "green", shape = "box"];
+ 3[label = "GroupByHash(Sort Groups)(Spill): 1 keys\nAggs:\n  sum(store_sales_fact.sales_dollar_amount)\n  sum(store_sales_fact.gross_profit_dollar_amount)\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "green", shape = "box"];
+ 4[label = "StorageUnionStep: store_sales_fact_super\nLocally Resegment\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "purple", shape = "box"];
+ 5[label = "GroupByPipe(HashPrepass): 1 keys\nAggs:\n  sum(store_sales_fact.sales_dollar_amount)\n  sum(store_sales_fact.gross_profit_dollar_amount)\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "brown", shape = "box"];
+ 6[label = "ScanStep: store_sales_fact_super\n((store_sales_fact.store_sales_date \>= \'2025-01-01\'::date) AND (store_sales_fact.store_sales_date \< \'2026-01-01\'::date))\nstore_key\nsales_dollar_amount\ngross_profit_dollar_amount\nstore_sales_date (not emitted)\nUnc: Integer(8)\nUnc: Integer(8)\nUnc: Integer(8)", color = "brown", shape = "box"];
+ 1->0 [label = "V[0] C=3",color = "black",style="bold", arrowtail="inv"];
+ 2->1 [label = "0",color = "blue"];
+ 3->2 [label = "0",color = "blue"];
+ 4->3 [label = "0",color = "blue"];
+ 5->4 [label = "0",color = "blue"];
+ 6->5 [label = "0",color = "blue"];
+ }
+(45 rows)
+
