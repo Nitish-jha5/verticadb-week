@@ -1,0 +1,13 @@
+-- Day 3: ETL Resource Pool
+
+CREATE RESOURCE POOL etl_pool
+    MEMORYSIZE '5%'
+    MAXMEMORYSIZE '10%'
+    PLANNEDCONCURRENCY 2;
+
+GRANT USAGE ON RESOURCE POOL etl_pool TO etl_user;
+
+ALTER USER etl_user RESOURCE POOL etl_pool;
+
+ALTER RESOURCE POOL etl_pool
+    MAXCONCURRENCY 1;
