@@ -6,12 +6,14 @@ Build and verify a basic Vertica security and workload-management setup beyond t
 
 The lab covers:
 
-* Creating real users and roles
-* Granting and revoking schema/table privileges
+* Creating users and roles
+* Granting schema and table privileges
 * Separating read-only analyst access from ETL load access
+* Verifying role-based access separation
 * Assigning a resource pool to a workload
 * Configuring memory and concurrency limits
-* Proving that a resource-pool restriction is actually enforced
+* Proving that a resource-pool runtime restriction is actually enforced
+* Monitoring resource-pool and query activity
 * Understanding K-safety and multi-node concepts
 
 ## Environment
@@ -42,6 +44,8 @@ SET ROLE analyst_role;
 SELECT * FROM training.orders;
 ```
 
+The analyst role was not granted `INSERT` on `training.orders`.
+
 ## ETL Access
 
 Created `etl_role` and granted schema usage plus `INSERT` on `training.orders`.
@@ -53,6 +57,8 @@ GRANT INSERT ON training.orders TO etl_role;
 SET ROLE etl_role;
 ```
 
+The ETL role was not granted `SELECT` on `training.orders`.
+
 ## Access-Control Matrix
 
 | Role           | `SELECT training.orders` | `INSERT training.orders` |
@@ -61,6 +67,34 @@ SET ROLE etl_role;
 | `etl_role`     |                   Denied |                  Allowed |
 
 The permissions were tested using separate non-`dbadmin` users.
+
+The repository documents the resulting access separation. Exact error text from denied operations was not retained as a separate evidence file.
+
+## RBAC Verification
+
+### Analyst
+
+`analyst_user` was assigned `analyst_role` and tested for read access to `training.orders`.
+
+```sql
+SET ROLE analyst_role;
+
+SELECT * FROM training.orders;
+```
+
+The analyst role has `SELECT` access but does not have `INSERT` permission on `training.orders`.
+
+### ETL
+
+`etl_user` was assigned `etl_role` and tested for write access to `training.orders`.
+
+```sql
+SET ROLE etl_role;
+```
+
+The ETL role has `INSERT` access but does not have `SELECT` permission on `training.orders`.
+
+This demonstrates separation of duties between analytical read access and ETL write access.
 
 ## Resource Pool
 
@@ -80,9 +114,16 @@ ALTER RESOURCE POOL etl_pool
     MAXCONCURRENCY 1;
 ```
 
+The pool was configured with:
+
+* Initial memory size: `5%`
+* Maximum memory size: `10%`
+* Planned concurrency: `2`
+* Maximum concurrency: `1`
+
 ## Resource-Pool Enforcement Proof
 
-Created a workload table large enough to produce a measurable query.
+A workload table was created and populated with one million rows to provide a measurable query workload.
 
 ```sql
 CREATE TABLE training.pool_test (
@@ -104,7 +145,42 @@ LIMIT 1000000;
 COMMIT;
 ```
 
-The resource-pool concurrency restriction was tested at runtime. The test produced `ERROR 3326`, demonstrating that the configured maximum concurrency was enforced rather than merely documented.
+The ETL role was granted access to the workload table:
+
+```sql
+GRANT SELECT ON training.pool_test TO etl_role;
+```
+
+For the enforcement test, a deliberately short runtime cap was applied to `etl_pool`:
+
+```sql
+ALTER RESOURCE POOL etl_pool
+    RUNTIMECAP '00:00:01';
+```
+
+The workload query was then executed as `etl_user`:
+
+```sql
+SELECT COUNT(*)
+FROM training.pool_test;
+```
+
+The test produced:
+
+```text
+ERROR 3326: Execution time exceeded run time cap of 00:00:01
+```
+
+This demonstrates that the configured **runtime cap was actually enforced**.
+
+The `ERROR 3326` test should not be interpreted as a concurrency-queueing test. `MAXCONCURRENCY 1` was configured separately and can be verified through resource-pool metadata.
+
+After the test, the runtime cap was restored:
+
+```sql
+ALTER RESOURCE POOL etl_pool
+    RUNTIMECAP NONE;
+```
 
 ## Monitoring
 
@@ -131,7 +207,7 @@ ORDER BY request_id DESC
 LIMIT 10;
 ```
 
-These views helped verify the pool configuration and the workload executed by `etl_user`.
+These views were used to verify the pool configuration and inspect workload activity for `etl_user`.
 
 ## K-Safety and Multi-Node Concepts
 
@@ -164,6 +240,17 @@ Conceptually:
 * K-safety provides **data redundancy and fault tolerance across nodes**.
 * A multi-node cluster is required to demonstrate physical redundancy and failover.
 
+## SQL Files
+
+The Day 3 SQL work is organized as follows:
+
+| File                   | Purpose                                            |
+| ---------------------- | -------------------------------------------------- |
+| `01_security_rbac.sql` | Analyst and ETL role privileges                    |
+| `02_resource_pool.sql` | ETL resource-pool configuration                    |
+| `03_pool_test.sql`     | Workload creation and runtime-cap enforcement test |
+| `04_monitoring.sql`    | Resource-pool, query, and node monitoring          |
+
 ## SQL Work Completed
 
 | Area              | Work                                                       |
@@ -172,11 +259,11 @@ Conceptually:
 | Users             | Created `analyst_user` and `etl_user`                      |
 | Schema access     | Granted `USAGE` on `training`                              |
 | Table access      | Granted `SELECT` or `INSERT` according to role             |
-| Access proof      | Verified allowed and denied operations                     |
+| Access proof      | Verified allowed and denied access separation              |
 | Resource pool     | Created `etl_pool`                                         |
 | Memory limits     | Configured 5% initial and 10% maximum memory               |
 | Concurrency       | Configured planned concurrency 2 and maximum concurrency 1 |
-| Enforcement proof | Captured `ERROR 3326` from the runtime cap                 |
+| Enforcement proof | Captured `ERROR 3326` from a deliberate `RUNTIMECAP` test  |
 | Monitoring        | Used `resource_pool_status` and `v_monitor.query_requests` |
 | K-safety          | Verified the environment is single-node                    |
 
@@ -186,10 +273,7 @@ Conceptually:
 2. Schema `USAGE` is required before a role can access objects within the schema.
 3. `analyst_role` and `etl_role` demonstrate separation of duties.
 4. Resource pools can be assigned to specific users and configured with workload limits.
-5. A configuration alone is not sufficient as proof; the runtime-cap test produced an actual Vertica error showing enforcement.
-6. K-safety is a multi-node concept and cannot be physically demonstrated on this single-node CE environment.
-7. No passwords or other credentials were stored in this repository.
-
-```
-
-
+5. A configuration alone is not sufficient as proof; the runtime-cap test produced `ERROR 3326`, demonstrating actual enforcement of the runtime limit.
+6. The configured `MAXCONCURRENCY 1` setting is separate from the runtime-cap test and should not be represented as having been proven by `ERROR 3326`.
+7. K-safety is a multi-node concept and cannot be physically demonstrated on this single-node CE environment.
+8. No passwords or other credentials were stored in this repository.
