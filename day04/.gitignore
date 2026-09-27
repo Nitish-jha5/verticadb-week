@@ -1,0 +1,24 @@
+# Local / generated files
+*.log
+*.tmp
+*.swp
+
+# Credentials and secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Local data and Vertica-generated artifacts
+data/*
+results/*
+
+# Keep directory placeholders
+!data/.gitkeep
+!results/.gitkeep
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
