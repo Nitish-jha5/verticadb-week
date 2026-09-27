@@ -1,0 +1,29 @@
+Project Meridian — Product Category Revenue
+EXPLAIN BEFORE Physical Design
+
+Query:
+SELECT
+    p.category,
+    SUM(o.quantity * o.unit_price - o.discount_amount) AS revenue
+FROM meridian.orders o
+JOIN meridian.products p
+  ON p.product_id = o.product_id
+GROUP BY p.category
+ORDER BY revenue DESC;
+
+Observed plan:
+- Estimated cost: approximately 750
+- Hash join between orders and products
+- Hash/group-by execution
+- Local resegmentation was required
+- orders_super and products_super were used
+- Orders estimated at 13 rows
+- Products estimated at 5 rows
+- Join estimated at 11 rows
+- Final result estimated at 4 rows
+- SIP runtime filtering was present
+
+Interpretation:
+Before the custom physical design, the query used a hash join and
+required local resegmentation rather than using projections explicitly
+designed around the product_id join key.

@@ -22,3 +22,9 @@ results/*
 Thumbs.db
 .vscode/
 .idea/
+
+# Submission evidence
+!results/
+!results/.gitkeep
+!results/*.txt
+!results/*.rejects

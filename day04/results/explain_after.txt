@@ -1,0 +1,39 @@
+Project Meridian — Product Category Revenue
+EXPLAIN AFTER Physical Design
+
+Query:
+SELECT
+    p.category,
+    SUM(o.quantity * o.unit_price - o.discount_amount) AS revenue
+FROM meridian.orders o
+JOIN meridian.products p
+  ON p.product_id = o.product_id
+GROUP BY p.category
+ORDER BY revenue DESC;
+
+Observed plan:
+- Estimated cost: approximately 734
+- Merge join between orders_join and products_join
+- Both projections are designed around product_id
+- orders_join is segmented by HASH(product_id)
+- products_join is segmented by HASH(product_id)
+- Inputs were presorted for the merge join
+- orders_join estimated at 13 rows
+- products_join estimated at 5 rows
+- Join estimated at 11 rows
+- Final result estimated at 4 rows
+- SIP merge-join runtime filtering was present
+
+Interpretation:
+After the physical design, the product-category query used the
+purpose-built orders_join and products_join projections and changed
+from the previous hash-join/resegmentation plan to a merge join
+using product_id-aligned projections.
+
+The estimated cost decreased from approximately 750 to approximately
+734. The plan-shape improvement is the primary evidence of the
+physical-design change.
+
+The dataset contains only 13 orders and 5 products, so execution-time
+measurements are too small/noisy to claim a reliable wall-clock
+improvement.

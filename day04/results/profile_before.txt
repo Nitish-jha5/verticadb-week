@@ -1,0 +1,23 @@
+Project Meridian — Product Category Revenue
+PROFILE BEFORE Physical Design
+
+Recorded Vertica PROFILE observations:
+
+- Query: product-category revenue aggregation
+- Profiled execution: yes
+- Total runtime: approximately 19.3 ms
+- Total memory: approximately 1,835,352 KB
+- Resource pool: general
+- Orders projection used: orders_super
+- Products projection used: products_super
+- Plan shape: hash join with local resegmentation
+
+Interpretation:
+This is the baseline PROFILE measurement captured before the custom
+physical design.
+
+Important limitation:
+The test dataset contains only 13 orders and 5 products on a
+single-node Vertica CE installation. Therefore the measured runtime
+is dominated by fixed execution overhead and is not representative
+of production-scale workload performance.

@@ -1,0 +1,30 @@
+Project Meridian — Product Category Revenue
+PROFILE AFTER Physical Design
+
+Recorded Vertica PROFILE observations:
+
+- Query: product-category revenue aggregation
+- Profiled execution: yes
+- Total runtime: approximately 46.0 ms
+- Total memory: approximately 1,827,054 KB
+- Resource pool: general
+- Orders projection used: orders_join
+- Products projection used: products_join
+- Plan shape: merge join using product_id-aligned projections
+
+Interpretation:
+The physical design changed the execution plan and projection usage as
+intended. The PROFILE runtime itself increased from approximately
+19.3 ms to approximately 46.0 ms on this tiny test dataset.
+
+Therefore, this project does NOT claim a wall-clock execution-time
+improvement from the physical design.
+
+The runtime difference is treated as measurement noise/fixed overhead
+rather than evidence that the physical design made the query slower
+in general. A meaningful runtime comparison would require a
+representative larger dataset and repeated measurements.
+
+The primary demonstrated performance improvement is the plan change:
+the query moved from the baseline hash-join/resegmentation plan to a
+merge join using purpose-built projections aligned on product_id.
